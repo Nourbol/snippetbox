@@ -55,8 +55,8 @@ func (sm *SnippetModel) Insert(title string, content string, expires int) (int, 
 
 func (sm *SnippetModel) Latest() ([]*Snippet, error) {
 	stmt := `SELECT id, title, content, created, expires 
-			 FROM snippets 
-			 WHERE expires = UTC_TIMESTAMP() 
+			 FROM snippets
+			 WHERE expires > UTC_TIMESTAMP() 
 			 ORDER BY id DESC 
 			 LIMIT 10`
 
