@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"flag"
+	form2 "github.com/go-playground/form/v4"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/nourbol/snippetbox/internal/models"
 	"html/template"
@@ -16,6 +17,7 @@ type application struct {
 	infoLogger    *log.Logger
 	snippets      *models.SnippetModel
 	templateCache map[string]*template.Template
+	formDecoder   *form2.Decoder
 }
 
 func main() {
@@ -37,11 +39,14 @@ func main() {
 		errorLog.Fatal(err)
 	}
 
+	formDecoder := form2.NewDecoder()
+
 	app := &application{
 		errorLogger:   errorLog,
 		infoLogger:    infoLog,
 		snippets:      &models.SnippetModel{DB: db},
 		templateCache: templateCache,
+		formDecoder:   formDecoder,
 	}
 
 	srv := &http.Server{
