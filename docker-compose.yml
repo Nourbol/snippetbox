@@ -5,8 +5,6 @@ services:
     ports:
       - "4000:4000"
     build: .
-    environment:
-      DB_URL: mysql://db/snippetbox
     depends_on:
       db:
         condition: service_healthy
@@ -29,9 +27,6 @@ services:
 
   migrate:
     image: migrate/migrate
-    environment:
-      - DB_USER=root
-      - DB_PASS=123456
     depends_on:
       db:
         condition: service_healthy
