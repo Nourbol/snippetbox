@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  web:
+    ports:
+      - "4000:4000"
+    build: .
+    environment:
+      DB_URL: mysql://db/snippetbox
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint: [ "go", "run", "./cmd/web", "-dsn=${DB_USER}:${DB_PASS}@tcp(db:${DB_PORT})/snippetbox?parseTime=true" ]
+
+  db:
+    image: mysql:8.0.31-debian
+    ports:
+      - "${DB_PORT}:3306"
+    command: --init-file /data/application/init.sql
+    volumes:
+      - snippetbox:/var/lib/mysql
+      - ./migrations/init.sql:/data/application/init.sql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "-u", "${DB_TEST_USER}", "-p${DB_TEST_PASS}", "ping" ]
+      timeout: 10s
+      retries: 1
+
+  migrate:
+    image: migrate/migrate
+    environment:
+      - DB_USER=root
+      - DB_PASS=123456
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+    volumes:
+      - ./migrations:/migrations
+    command: [ "-path", "/migrations", "-database",  "mysql://${DB_ROOT_USER}:${DB_ROOT_PASS}@tcp(db:${DB_PORT})/snippetbox", "up", "3" ]
+
+volumes:
+  snippetbox:
