@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: snippetbox-deployment
+  labels:
+    app: snippetbox
+spec:
+  selector:
+    matchLabels:
+      app: snippetbox
+  template:
+    metadata:
+      labels:
+        app: snippetbox
+    spec:
+      containers:
+        - name: snippetbox
+          image: snippetbox:1
+          ports:
+            - containerPort: 4000
+          command: [ "go", "run" ]
+          args: [ "./cmd/web", "-dsn=$(DB_USER):$(DB_PASS)@tcp($(DB_SERVER))/snippetbox?parseTime=true" ]
+          env:
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: snippetbox-secret
+                  key: DB_USER
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: snippetbox-secret
+                  key: DB_PASS
+            - name: DB_SERVER
+              valueFrom:
+                configMapKeyRef:
+                  name: snippetbox-configmap
+                  key: DB_SERVER
+
+#        - name: migrations
+#          image: migrate/migrate
+#          command: [ "-path", "/migrations", "-database" ]
+#          args: [ "mysql://$(DB_ROOT_USER):$(DB_ROOT_PASS)@tcp($(DB_SERVER))/snippetbox", "up", "3" ]
+#          env:
+#            - name: DB_ROOT_USER
+#              valueFrom:
+#                secretKeyRef:
+#                  name: mysql-db-secret
+#                  key: MYSQL_ROOT_USERNAME
+#            - name: DB_ROOT_PASS
+#              valueFrom:
+#                secretKeyRef:
+#                  name: mysql-db-secret
+#                  key: MYSQL_ROOT_PASSWORD
+#            - name: DB_SERVER
+#              valueFrom:
+#                configMapKeyRef:
+#                  name: snippetbox-configmap
+#                  key: DB_SERVER
+#          volumeMounts:
+#            name: /migrations
+#            mountPath: /migrations
+#      volumes:
+#        - name:
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: snippetbox-service
+spec:
+  selector:
+    app: snippetbox
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 4000
+      targetPort: 4000
+      nodePort: 30001
